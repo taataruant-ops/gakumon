@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#e9f0fb" />
+  <title>学萌</title>
+  <link rel="icon" type="image/jpeg" href="/static/gakumon-icon.jpg" />
+  <link rel="apple-touch-icon" href="/static/gakumon-icon.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/vendor/katex/katex.min.css" />
+  <script defer src="/static/vendor/katex/katex.min.js"></script>
+  <script defer src="/static/vendor/katex/contrib/auto-render.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css?v=20261122s4" />
+</head>
+<body class="is-landing is-booting">
+  <canvas id="bg-life-canvas" class="bg-life-canvas" aria-hidden="true"></canvas>
+
+  <!-- 学萌 ブランドアイコン（初期はチャット上真ん中、会話開始で左上へ滑らかに移動） -->
+  <button id="gakumon-brand-btn" class="gakumon-brand-btn" type="button" aria-label="学萌 ホームへ戻る" title="学萌">
+    <img src="/static/gakumon-icon.jpg" alt="学萌" class="gakumon-brand-img" />
+  </button>
+
+  <!-- 右上：ユーザー切替ピル（Wi-Fi共有時のRAG分離用） -->
+  <button id="user-pill-btn" class="corner-btn user-pill-btn" type="button" aria-label="ユーザーを切り替え" title="ユーザー名を切り替え">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+    <span id="user-pill-name" class="user-pill-name">ユーザー未設定</span>
+  </button>
+
+  <!-- 左上：過去のチャット（白黒ペンロゴ）とその下に苦手克服Webテストボタン -->
+  <div class="top-left-group">
+    <button id="history-btn" class="corner-btn corner-icon-only" type="button" aria-label="過去のチャットを開く" title="過去のチャット・RAG記憶">
+      <img src="/static/pen-logo.jpg" alt="過去のチャット" class="pen-logo-img" />
+    </button>
+    <button id="open-quiz-btn" class="corner-btn corner-icon-only corner-quiz-btn" type="button" aria-label="苦手克服Webテストを開く" title="苦手克服Webテスト（S-CBT）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 11l3 3L22 4" />
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+      </svg>
+    </button>
+    <button id="open-voice-btn" class="corner-btn corner-icon-only corner-voice-btn" type="button" aria-label="音声モードを開く" title="音声モード（Gemma 4 直接音声入力）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+        <line x1="12" y1="19" x2="12" y2="23" />
+        <line x1="8" y1="23" x2="16" y2="23" />
+      </svg>
+    </button>
+    <button id="open-note-btn" class="corner-btn corner-icon-only corner-note-btn" type="button" aria-label="AIノートを開く" title="AIノート（手書き学習ノート）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+        <line x1="8" y1="7" x2="16" y2="7" />
+        <line x1="8" y1="11" x2="14" y2="11" />
+      </svg>
+    </button>
+    <button id="open-book-btn" class="corner-btn corner-icon-only corner-book-btn" type="button" aria-label="AI本を開く" title="AI本（自分専用教科書）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- 左下：設定ボタン & RAG確認ボタン -->
+  <div class="bottom-left-group">
+    <button id="settings-btn" class="corner-btn corner-bottom-left" type="button" aria-label="設定を開く" title="設定">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+      <span class="corner-label">設定</span>
+    </button>
+    <button id="open-rag-view-btn" class="corner-btn corner-rag-btn" type="button" aria-label="RAG空間を確認" title="RAG空間を確認">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="2.5" />
+        <circle cx="5" cy="7" r="1.5" />
+        <circle cx="19" cy="7" r="1.5" />
+        <circle cx="6" cy="17" r="1.5" />
+        <circle cx="18" cy="17" r="1.5" />
+        <path d="M9.8 10.7L6.3 8.1M14.2 10.7l3.5-2.6M10 13.5L7.1 16M14 13.5l2.9 2.5" />
+      </svg>
+      <span class="corner-label">RAGを確認</span>
+    </button>
+  </div>
+
+  <!-- メインチャット領域 -->
+  <main class="stage">
+    <div id="chat-feed" class="chat-feed" aria-live="polite"></div>
+
+    <!-- 入力ユニット（最初はど真ん中、チャット開始後は真ん中下へ勾配降下） -->
+    <section id="composer-dock" class="composer-dock" aria-label="質問入力">
+      <h1 id="landing-heading" class="landing-heading">何が分からない？</h1>
+
+      <form id="ask-form" class="composer-box">
+        <div id="image-preview-wrap" class="image-preview-wrap" hidden>
+          <img id="image-preview" class="image-preview" alt="添付した問題画像" />
+          <button id="clear-image-btn" type="button" class="clear-img-btn" aria-label="画像をはずす">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <textarea
+          id="question-input"
+          class="question-textarea"
+          rows="2"
+          placeholder="問題文を入力、またはスクリーンショットを貼り付け（Ctrl+V）"
+        ></textarea>
+
+        <div class="composer-toolbar">
+          <div class="toolbar-left">
+            <input id="image-input" type="file" accept="image/*" hidden />
+            <div class="attach-wrap">
+              <button id="attach-btn" type="button" class="icon-text-btn" aria-haspopup="true" aria-expanded="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                </svg>
+                <span>添付</span>
+              </button>
+              <div id="attach-menu" class="attach-menu" role="menu" hidden>
+                <button id="attach-image-opt" type="button" class="attach-menu-item" role="menuitem">画像を添付</button>
+                <button id="attach-note-opt" type="button" class="attach-menu-item" role="menuitem">AIノートを添付</button>
+              </div>
+            </div>
+            <span class="model-hint">Gemma 4 12B + EmbeddingGemma 2</span>
+          </div>
+          <button id="ask-btn" type="submit" class="send-btn" aria-label="送信">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 19V5" />
+              <path d="M5 12l7-7 7 7" />
+            </svg>
+          </button>
+        </div>
+      </form>
+      <div id="error-banner" class="error-banner" role="alert" hidden></div>
+    </section>
+  </main>
+
+  <!-- 左ドロワー：過去のチャット＆RAG記憶 -->
+  <div id="drawer-backdrop" class="backdrop drawer-backdrop" aria-hidden="true"></div>
+  <aside id="history-drawer" class="drawer" aria-label="過去のチャットとRAG記憶" aria-hidden="true">
+    <div class="drawer-header">
+      <button id="new-chat-btn" type="button" class="new-chat-btn">+ 新しい質問</button>
+      <button id="close-drawer-btn" type="button" class="close-btn" aria-label="閉じる">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="drawer-tabs" role="tablist">
+      <button id="tab-chats" type="button" class="drawer-tab is-active" role="tab" aria-selected="true">履歴</button>
+      <button id="tab-rag" type="button" class="drawer-tab" role="tab" aria-selected="false">RAG (<span id="rag-count">0</span>)</button>
+    </div>
+
+    <div id="panel-chats" class="drawer-panel">
+      <div id="chats-empty" class="drawer-empty">まだチャット履歴がありません。</div>
+      <ul id="chats-list" class="drawer-list"></ul>
+    </div>
+
+    <div id="panel-rag" class="drawer-panel" hidden>
+      <button id="drawer-rag-map-btn" type="button" class="secondary-btn" style="width:100%;">RAG空間（砂鉄マップ）を開く</button>
+      <div id="rag-empty" class="drawer-empty">まだRAGに保存された会話がありません。質問すると自動でベクトル保存されます。</div>
+      <ul id="rag-list" class="drawer-list"></ul>
+    </div>
+  </aside>
+
+  <!-- ノート添付選択モーダル -->
+  <div id="note-picker-backdrop" class="backdrop" hidden></div>
+  <section id="note-picker-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="note-picker-title" hidden>
+    <div class="modal-header">
+      <h2 id="note-picker-title" class="modal-title">添付するAIノートを選ぶ</h2>
+      <button id="close-note-picker-btn" type="button" class="close-btn" aria-label="閉じる">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div id="note-picker-empty" class="drawer-empty" hidden>まだ書き込みのあるノートがありません。左上のAIノートから書いてみてください。</div>
+    <ul id="note-picker-list" class="drawer-list" style="max-height:55vh;overflow-y:auto;"></ul>
+  </section>
+
+  <!-- 設定モーダル -->
+  <div id="settings-backdrop" class="backdrop" hidden></div>
+  <section id="settings-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
+    <div class="modal-header">
+      <h2 id="settings-title" class="modal-title">設定</h2>
+      <button id="close-settings-btn" type="button" class="close-btn" aria-label="閉じる">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="setting-group">
+        <div class="setting-label">ローカルモデル稼働状況</div>
+        <div class="status-row">
+          <span>Gemma 4 12B (port 8770)</span>
+          <span id="status-llm" class="status-pill is-checking">確認中</span>
+        </div>
+        <div class="status-row">
+          <span>EmbeddingGemma 2 (port 8790)</span>
+          <span id="status-embed" class="status-pill is-checking">確認中</span>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label" for="threshold-range">
+          類似ミス検出のしきい値：<strong id="threshold-value">0.62</strong>
+        </label>
+        <input id="threshold-range" type="range" min="0.50" max="0.85" step="0.01" value="0.62" class="range-input" />
+        <p class="setting-help">下げるほど関連する過去問を広く拾い、上げるほどそっくりな問題だけに反応します。</p>
+      </div>
+
+      <div class="setting-group">
+        <button id="replay-anim-btn" type="button" class="secondary-btn">初期アニメーションを再生</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RAG 空間ビュー（砂鉄集約・拡大確認） -->
+  <section id="rag-view" class="rag-view" aria-label="RAG知識空間" hidden>
+    <header class="rag-topbar">
+      <div class="rag-topbar-left">
+        <button id="rag-back-btn" type="button" class="corner-btn-inline">チャットに戻る</button>
+        <div>
+          <h2 class="rag-view-title">RAG 記憶空間</h2>
+          <p class="rag-view-sub">最後に入力した質問を磁石の中心に、意味が近い記憶ほど砂鉄のように引き寄せられます（ホイールで拡大・クリックで内容表示）</p>
+        </div>
+      </div>
+      <div class="rag-controls">
+        <button id="rag-regather-btn" type="button" class="secondary-btn">集まり直す</button>
+        <button id="rag-zoom-in-btn" type="button" class="icon-square-btn" aria-label="拡大">+</button>
+        <button id="rag-zoom-out-btn" type="button" class="icon-square-btn" aria-label="縮小">−</button>
+        <button id="rag-zoom-reset-btn" type="button" class="secondary-btn">リセット</button>
+      </div>
+    </header>
+
+    <div class="rag-stage">
+      <canvas id="rag-canvas" class="rag-canvas"></canvas>
+      <div id="rag-empty-overlay" class="rag-empty-overlay" hidden>
+        まだRAGに保存された記憶がありません。チャットで質問するとここに砂鉄のように集まります。
+      </div>
+
+      <aside id="rag-detail-card" class="rag-detail-card" hidden>
+        <div class="rag-detail-head">
+          <div class="rag-detail-badges">
+            <span id="rag-detail-tag" class="tag-chip"></span>
+            <span id="rag-detail-sim" class="rag-badge"></span>
+          </div>
+          <button id="rag-detail-close" type="button" class="close-btn" aria-label="閉じる">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="rag-detail-date" id="rag-detail-date"></div>
+        <h3 class="rag-detail-label">質問</h3>
+        <div id="rag-detail-question" class="rag-detail-text"></div>
+        <h3 class="rag-detail-label">回答</h3>
+        <div id="rag-detail-answer" class="rag-detail-answer answer-body"></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- S-CBT風 苦手克服Webテスト画面 -->
+  <section id="quiz-view" class="quiz-view" aria-label="苦手克服Webテスト" hidden>
+    <header class="cbt-topbar">
+      <div class="cbt-topbar-left">
+        <button id="quiz-back-btn" type="button" class="corner-btn-inline">チャットに戻る</button>
+        <div>
+          <h2 id="quiz-header-title" class="cbt-title">苦手克服 Webテスト（S-CBT）</h2>
+          <p id="quiz-header-sub" class="cbt-sub">過去のつまずき・RAG記憶から専用テストを生成します</p>
+        </div>
+      </div>
+      <div class="cbt-topbar-right">
+        <span id="quiz-timer" class="cbt-timer" hidden>00:00</span>
+        <span id="quiz-progress" class="cbt-progress" hidden>1 / 3</span>
+      </div>
+    </header>
+
+    <!-- 1. 出題テーマ入力画面 -->
+    <div id="quiz-setup" class="cbt-setup-wrap">
+      <form id="quiz-setup-form" class="cbt-setup-card">
+        <h3 class="cbt-setup-heading">どんな苦手克服問題を作りますか？</h3>
+        <p class="cbt-setup-desc">例：「過去につまずいた数学の二次方程式」「Pythonのコピー」「英語の現在完了」など</p>
+        <input id="quiz-topic-input" type="text" class="cbt-topic-input" placeholder="例：数学の苦手克服問題" />
+        <div class="cbt-setup-row">
+          <label class="cbt-count-label" for="quiz-count-select">問題数</label>
+          <select id="quiz-count-select" class="cbt-count-select">
+            <option value="3" selected>3問（サクッと確認）</option>
+            <option value="5">5問（しっかり演習）</option>
+          </select>
+          <button id="quiz-generate-btn" type="submit" class="cbt-primary-btn">テストを作成する</button>
+        </div>
+        <div id="quiz-setup-error" class="error-banner" role="alert" hidden></div>
+      </form>
+    </div>
+
+    <!-- 2. 作成中ローディング -->
+    <div id="quiz-loading" class="cbt-loading-wrap" hidden>
+      <div class="loading-card">
+        <div class="bookshelf-loader" aria-hidden="true">
+          <div class="shelf-books">
+            <span class="shelf-book book-1"></span>
+            <span class="shelf-book book-2"></span>
+            <span class="shelf-book book-3"></span>
+            <span class="shelf-book book-4"></span>
+          </div>
+          <div class="shelf-plank"></div>
+        </div>
+        <span id="quiz-loading-text">過去のつまずきからWebテストを作成しています…</span>
+      </div>
+    </div>
+
+    <!-- 3. S-CBT 受験画面 -->
+    <div id="quiz-exam" class="cbt-exam-layout" hidden>
+      <aside class="cbt-sidebar" aria-label="問題一覧">
+        <div class="cbt-sidebar-title">問題番号</div>
+        <div id="quiz-nav-grid" class="cbt-nav-grid"></div>
+        <div class="cbt-legend">
+          <span><i class="dot dot-answered"></i>解答済み</span>
+          <span><i class="dot dot-flagged"></i>見直し</span>
+        </div>
+        <button id="quiz-finish-btn" type="button" class="cbt-finish-btn">解答を終了して採点する</button>
+      </aside>
+
+      <div class="cbt-main">
+        <div class="cbt-question-card">
+          <div class="cbt-q-head">
+            <div class="cbt-q-meta">
+              <span id="quiz-q-number" class="cbt-q-badge">第 1 問</span>
+              <span id="quiz-q-hint" class="tag-chip" hidden></span>
+            </div>
+            <button id="quiz-flag-btn" type="button" class="cbt-flag-btn">見直しフラグ</button>
+          </div>
+          <div id="quiz-q-body" class="cbt-q-body answer-body"></div>
+          <div id="quiz-choices" class="cbt-choices" role="radiogroup" aria-label="選択肢"></div>
+        </div>
+
+        <div class="cbt-footer-nav">
+          <button id="quiz-prev-btn" type="button" class="secondary-btn">前の問題</button>
+          <button id="quiz-next-btn" type="button" class="cbt-primary-btn">次の問題</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 採点結果・振り返り画面 -->
+    <div id="quiz-result" class="cbt-result-wrap" hidden>
+      <div class="cbt-score-card">
+        <div class="cbt-score-main">
+          <span class="cbt-score-label">採点結果</span>
+          <strong id="quiz-score-value" class="cbt-score-value">0 / 3 問正解</strong>
+          <span id="quiz-score-time" class="cbt-score-time"></span>
+        </div>
+        <div class="cbt-score-actions">
+          <button id="quiz-retry-btn" type="button" class="secondary-btn">同じテーマで別の問題を作る</button>
+          <button id="quiz-new-topic-btn" type="button" class="cbt-primary-btn">別のテーマを選ぶ</button>
+        </div>
+      </div>
+      <div id="quiz-review-list" class="cbt-review-list"></div>
+    </div>
+  </section>
+
+  <!-- 音声モード画面（Gemma 4 12B 直接音声入力 ＋ リアルタイム応答） -->
+  <section id="voice-view" class="voice-view" aria-label="音声モード" hidden>
+    <header class="rag-topbar">
+      <div class="rag-topbar-left">
+        <button id="voice-back-btn" type="button" class="corner-btn-inline">チャットに戻る</button>
+        <div>
+          <h2 id="voice-view-title" class="rag-view-title">音声モード（学萌）</h2>
+          <p class="rag-view-sub">Gemma 4 12B ネイティブ音声入力（話している途中でも割り込めます）</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="voice-stage">
+      <div id="voice-orb" class="voice-orb is-idle">
+        <div class="voice-bars" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <div id="voice-state-label" class="voice-state-label">マイクボタンを押して会話を開始</div>
+
+      <div class="voice-transcript">
+        <div class="voice-line voice-line-user">
+          <span class="voice-who">あなた</span>
+          <p id="voice-user-text" class="voice-bubble-text">（ここに聞き取った内容が表示されます）</p>
+        </div>
+        <div class="voice-line voice-line-ai">
+          <span id="voice-ai-who" class="voice-who">学萌</span>
+          <p id="voice-ai-text" class="voice-bubble-text">（ここにリアルタイム応答が表示されます）</p>
+        </div>
+      </div>
+
+      <div class="voice-controls">
+        <button id="voice-mic-btn" type="button" class="voice-mic-btn">マイクON（会話開始）</button>
+        <button id="voice-interrupt-btn" type="button" class="secondary-btn" disabled>応答を止める</button>
+      </div>
+
+      <div class="voice-device-row">
+        <label class="small-label" for="voice-mic-select" style="margin:0;white-space:nowrap;">マイク</label>
+        <select id="voice-mic-select" class="cbt-count-select voice-mic-select">
+          <option value="">既定のマイク</option>
+        </select>
+        <button id="voice-mic-refresh" type="button" class="secondary-btn" style="padding:6px 10px;">再取得</button>
+        <div class="mic-meter" title="マイク入力レベル">
+          <div id="voice-mic-meter-fill" class="mic-meter-fill"></div>
+        </div>
+      </div>
+
+      <form id="voice-text-form" class="voice-text-form">
+        <input id="voice-text-input" type="text" class="text-input" placeholder="マイクが使えない場合はここからテキストで話しかけられます" />
+        <button type="submit" class="cbt-primary-btn">話す</button>
+      </form>
+      <div id="voice-error" class="error-banner" role="alert" hidden></div>
+    </div>
+  </section>
+
+  <!-- AIノート画面（手書き学習ノート・筆圧対応・RAG＆チャット連携） -->
+  <section id="note-view" class="note-view" aria-label="AIノート" hidden>
+    <header class="note-topbar">
+      <div class="note-topbar-left">
+        <button id="note-back-btn" type="button" class="corner-btn-inline">チャットに戻る</button>
+        <select id="note-book-select" class="cbt-count-select" aria-label="ノートを選択"></select>
+        <input id="note-title-input" type="text" class="note-title-input" placeholder="ノート名（例：数学ノート）" />
+        <button id="note-new-book-btn" type="button" class="secondary-btn" style="padding:6px 10px;">+ 新規</button>
+      </div>
+      <div class="note-topbar-right">
+        <span id="note-status" class="note-status" aria-live="polite"></span>
+        <button id="note-ask-btn" type="button" class="cbt-primary-btn" style="margin-left:0;">このノートで質問</button>
+      </div>
+    </header>
+
+    <div class="note-toolbar">
+      <div class="note-tool-group">
+        <button type="button" class="note-tool-btn is-active" data-note-tool="pen" data-note-color="#18222d" title="黒ペン（本文）">
+          <span class="color-dot" style="background:#18222d;"></span>黒
+        </button>
+        <button type="button" class="note-tool-btn" data-note-tool="pen" data-note-color="#dc2626" title="赤ペン（重要・下線）">
+          <span class="color-dot" style="background:#dc2626;"></span>赤
+        </button>
+        <button type="button" class="note-tool-btn" data-note-tool="pen" data-note-color="#1d4ed8" title="青ペン（補足メモ）">
+          <span class="color-dot" style="background:#1d4ed8;"></span>青
+        </button>
+        <button type="button" class="note-tool-btn" data-note-tool="box" data-note-color="#dc2626" title="四角囲み（重要ポイント）">
+          四角囲み
+        </button>
+        <button type="button" class="note-tool-btn" data-note-tool="eraser" title="線消しゴム">
+          消しゴム
+        </button>
+      </div>
+
+      <div class="note-tool-group">
+        <select id="note-width-select" class="cbt-count-select" aria-label="ペンの太さ">
+          <option value="2.2">細</option>
+          <option value="3.6" selected>中</option>
+          <option value="6">太</option>
+        </select>
+        <button id="note-undo-btn" type="button" class="note-tool-btn">戻す</button>
+        <button id="note-redo-btn" type="button" class="note-tool-btn">やり直す</button>
+        <input id="note-bg-file" type="file" accept="image/*" hidden />
+        <button id="note-bg-btn" type="button" class="note-tool-btn">プリント貼付</button>
+        <button id="note-clear-btn" type="button" class="note-tool-btn">クリア</button>
+      </div>
+
+      <div class="note-page-nav">
+        <button id="note-prev-page" type="button" class="icon-square-btn" aria-label="前のページ">‹</button>
+        <span id="note-page-label" class="note-page-label">P. 1 / 5</span>
+        <button id="note-next-page" type="button" class="icon-square-btn" aria-label="次のページ">›</button>
+      </div>
+    </div>
+
+    <div class="note-canvas-stage">
+      <div class="note-paper">
+        <canvas id="note-canvas" class="note-canvas"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI本画面（本棚ビュー ＋ 見開き教科書リーダー ＋ ページ追加） -->
+  <section id="book-view" class="book-view" aria-label="AI本" hidden>
+    <header class="note-topbar">
+      <div class="note-topbar-left">
+        <button id="book-back-btn" type="button" class="corner-btn-inline">チャットに戻る</button>
+        <div>
+          <h2 class="rag-view-title">AI本（自分専用教科書）</h2>
+          <p class="rag-view-sub">関連するRAG記憶（最大20件）から見開き教科書を作成・ページ追加できます</p>
+        </div>
+      </div>
+      <div class="note-topbar-right">
+        <button id="book-shelf-mode-btn" type="button" class="secondary-btn">本棚（過去の本を見る）</button>
+        <button id="book-new-mode-btn" type="button" class="cbt-primary-btn" style="margin-left:0;">+ 新しい教科書を作る</button>
+      </div>
+    </header>
+
+    <div class="book-stage">
+      <!-- 1. 本棚ビュー（背表紙にタイトルが入った本が並ぶ） -->
+      <div id="book-shelf-wrap" class="bookshelf-wrap" hidden>
+        <div class="bookshelf-cabinet">
+          <div id="book-shelf-empty" class="bookshelf-empty" hidden>
+            まだ本棚に教科書がありません。「+ 新しい教科書を作る」から最初の1冊を作ってみましょう。
+          </div>
+          <div id="book-shelf-rows" class="bookshelf-rows"></div>
+        </div>
+      </div>
+
+      <!-- 2. 新規作成フォーム -->
+      <div id="book-create-wrap" class="book-create-wrap" hidden>
+        <form id="book-create-form" class="cbt-setup-card">
+          <h3 class="cbt-setup-heading">どんな教科書を作りますか？</h3>
+          <p class="cbt-setup-desc">過去のRAG記憶（最大20件）を参考に、見開きで読める自分専用の解説書を作成します。</p>
+          <input id="book-topic-input" type="text" class="cbt-topic-input" placeholder="例：数学の間違えたところの教科書を作って" />
+          <div class="cbt-setup-row">
+            <button id="book-create-btn" type="submit" class="cbt-primary-btn">教科書を作成する</button>
+          </div>
+          <div id="book-error" class="error-banner" role="alert" hidden></div>
+        </form>
+      </div>
+
+      <!-- 3. 執筆中ローディング -->
+      <div id="book-loading" class="cbt-loading-wrap" hidden>
+        <div class="loading-card">
+          <div class="bookshelf-loader" aria-hidden="true">
+            <div class="shelf-books">
+              <span class="shelf-book book-1"></span>
+              <span class="shelf-book book-2"></span>
+              <span class="shelf-book book-3"></span>
+              <span class="shelf-book book-4"></span>
+            </div>
+            <div class="shelf-plank"></div>
+          </div>
+          <span id="book-loading-text">過去のRAG記憶を集めて教科書を執筆しています…</span>
+        </div>
+      </div>
+
+      <!-- 4. 見開き教科書リーダー＆ページ追加 -->
+      <div id="book-reader" class="book-spread-wrap" hidden>
+        <div class="book-spread-controls">
+          <button id="book-prev-page" type="button" class="secondary-btn">‹ 前の見開き</button>
+          <span id="book-page-indicator" class="note-page-label">表紙・P.1</span>
+          <button id="book-next-page" type="button" class="secondary-btn">次の見開き ›</button>
+        </div>
+
+        <div id="book-spread" class="book-spread">
+          <div class="book-page book-page-left">
+            <div id="book-left-body" class="book-page-scroll answer-body"></div>
+            <div id="book-left-num" class="book-page-num"></div>
+          </div>
+          <div class="book-spine-gutter" aria-hidden="true"></div>
+          <div class="book-page book-page-right">
+            <div id="book-right-body" class="book-page-scroll answer-body"></div>
+            <div id="book-right-num" class="book-page-num"></div>
+          </div>
+        </div>
+
+        <form id="book-add-page-form" class="book-add-page-box">
+          <div class="book-add-row">
+            <input id="book-add-instruction" type="text" class="text-input" placeholder="この教科書にページを追加（例：応用例題ページを作って / 公式まとめを追加して）" />
+            <button id="book-add-page-btn" type="submit" class="cbt-primary-btn" style="margin-left:0;white-space:nowrap;">AIにページを追加</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- 初回・ユーザー切替モーダル（Wi-Fi共有時のRAG区別用） -->
+  <div id="user-modal-backdrop" class="backdrop user-modal-backdrop" hidden></div>
+  <section id="user-modal" class="modal user-modal" role="dialog" aria-modal="true" aria-labelledby="user-modal-title" hidden>
+    <div class="modal-header">
+      <div class="user-modal-head-brand">
+        <img src="/static/gakumon-icon.jpg" alt="学萌" class="user-modal-logo" />
+        <h2 id="user-modal-title">ユーザー名を決めてください</h2>
+      </div>
+      <button id="close-user-modal-btn" type="button" class="icon-close-btn" aria-label="閉じる">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p class="user-modal-desc">
+        同じWi-Fi内の人同士で <strong>RAG記憶・AI本</strong> が混ざらないよう、ユーザー名ごとに保存されます。
+      </p>
+      <form id="user-name-form" class="user-name-form">
+        <input id="user-name-input" type="text" class="text-input user-name-input" maxlength="40" placeholder="例：太郎、はなこ" autocomplete="nickname" />
+        <button type="submit" class="cbt-primary-btn user-name-submit">この名前で始める</button>
+      </form>
+      <p id="user-name-error" class="user-name-error" hidden></p>
+    </div>
+  </section>
+
+  <script src="/static/user-session.js?v=20261122s"></script>
+  <script src="/static/life-bg.js?v=20261122s"></script>
+  <script src="/static/rag-view.js?v=20261122s"></script>
+  <script src="/static/quiz-view.js?v=20261122s"></script>
+  <script src="/static/voice-view.js?v=20261122s"></script>
+  <script src="/static/note-view.js?v=20261122s4"></script>
+  <script src="/static/book-view.js?v=20261122s"></script>
+  <script src="/static/app.js?v=20261122s"></script>
+</body>
+</html>

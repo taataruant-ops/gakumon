@@ -1,0 +1,31 @@
+# Python / Virtual Environment
+.venv/
+__pycache__/
+*.py[cod]
+
+# User data / Database / Logs / Private TLS certs
+mistakes.db
+*.db
+*.sqlite3
+logs/
+certs/
+
+# Downloaded AI models & llama.cpp binaries (auto-downloaded by setup.bat)
+models/
+runtime/
+
+# Video / Audio / Editing files
+*.mp4
+*.mov
+*.MOV
+*.mkv
+*.avi
+*.wav
+*.wfp
+*.zip
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
