@@ -70,12 +70,16 @@ sudo ubuntu-drivers install   # NVIDIA ドライバ（入っていなければ�
 ## ワンクリック環境構築＆起動方法
 
 ### Windows の場合
+0. このページ右上の緑の **「Code」→「Download ZIP」** でダウンロードし、ZIP を右クリック → **「すべて展開」** する  
+   （※ 展開したフォルダの中の `setup.bat` を使ってください。ZIP の中のまま実行しないでください）
 1. **`setup.bat`** をダブルクリック（初回のみ：`.venv`・`llama.cpp` CUDA ランタイム・モデル一式・HTTPS証明書を自動構築）
 2. **`start.bat`** をダブルクリック（起動して自動で `https://127.0.0.1:8000` が開きます）
 3. 終了するときは **`stop.bat`** をダブルクリック
 
 ### Linux（Ubuntu 等）の場合
 ```bash
+git clone https://github.com/taataruant-ops/gakumon.git
+cd gakumon
 chmod +x setup.sh start.sh stop.sh
 ./setup.sh        # 初回のみ（AMD/Intel GPU は ./setup.sh --vulkan または --rocm）
 ./start.sh        # 起動（https://127.0.0.1:8000 および LAN IP:8000）
@@ -89,7 +93,10 @@ chmod +x setup.sh start.sh stop.sh
 - **EmbeddingGemma 2**（`ggml-org/embeddinggemma-2-GGUF`：`embeddinggemma-2-Q8_0.gguf`）→ `models/embeddinggemma-2/`
 - ローカルHTTPS自己署名証明書 → `certs/`
 
-> 同じWi-Fi内のスマホ・タブレットからは、起動時に表示される `https://<PCのIP>:8000` にアクセスしてください（初回のみ自己署名証明書の警告を「詳細設定 → アクセスする」で通過）。
+### 同じ Wi-Fi のスマホ・タブレットから開くときの注意
+- 起動時に表示される `https://<PCのIP>:8000` にアクセスしてください（初回のみ自己署名証明書の警告を「詳細設定 → アクセスする」で通過）。
+- 初回の起動時に「Windows セキュリティの重要な警告（Python）」が出たら、**「プライベート ネットワーク」** にチェックを入れて **「アクセスを許可する」** を押してください。許可しないと、同じ Wi-Fi のスマホやタブレットから学萌を開けません。
+- Linux で `ufw` を使っている場合は、`sudo ufw allow 8000/tcp` でポート 8000 を開けてください。
 
 ---
 
